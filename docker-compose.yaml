@@ -1,0 +1,48 @@
+version: "2"
+
+services:
+  n1:
+    image: cassandra
+    mem_limit: 4096m
+    volumes:
+      - data-volume:/var/lib/cassandra
+    ports:
+      - 9042:9042
+    networks:
+      - cluster
+
+  n2:
+    image: cassandra
+    networks:
+      - cluster
+    environment:
+      - CASSANDRA_SEEDS=n1
+    depends_on:
+      - n1
+
+  n3:
+    image: cassandra
+    networks:
+      - cluster
+    environment:
+      - CASSANDRA_SEEDS=n1
+    depends_on:
+      - n1
+
+  guestbook:
+    image: guestbook
+    ports:
+      - 8081:8081
+      - 8082:8082
+    networks:
+      - cluster
+    environment:
+      - spring.data.cassandra.contact-points= n1
+    depends_on:
+      - n1
+
+volumes:
+  data-volume:
+
+networks:
+  cluster:

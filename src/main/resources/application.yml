@@ -1,0 +1,34 @@
+spring.application.name: guestbook
+
+server.port: 8081
+
+management.server.port: 8082
+
+spring.data.rest.basePath: /api
+spring.data.cassandra.keyspace-name: guestbook
+spring.data.cassandra.local-datacenter: datacenter1
+spring.data.cassandra.contact-points: localhost
+---
+spring.profiles: docker
+spring:
+ data:
+   cassandra:
+     port: 9042
+     contact-points: localhost
+     local-datacenter: datacenter1
+     schema-action: create-if-not-exists
+---
+spring.profiles: kubernetes
+spring.cloud.kubernetes.enabled: true
+spring.cloud.kubernetes.config.enabled: true
+spring.cloud.kubernetes.config.sources.namespace: guestbook
+spring.cloud.kubernetes.reload.enabled: true
+spring.cloud.kubernetes.reload.mode: event
+spring.cloud.kubernetes.reload.strategy: refresh
+kubernetes.trust.certificates: true
+management.endpoint.restart.enabled: true
+management:
+   endpoints:
+      web:
+         exposure:
+            include: health,info,restart
