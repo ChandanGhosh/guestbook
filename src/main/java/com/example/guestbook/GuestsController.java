@@ -10,20 +10,21 @@ import java.util.List;
 
 @BasePathAwareController
 public class GuestsController {
-    @Autowired
-    private GuestRepository guestRepository;
+
+    // @Autowired
+    // private RestartApp restartApp;
 
     @Autowired
-    private RestartApp restartApp;
+    private GuestsService guestService;
 
     @RequestMapping(value = "/guests", method = RequestMethod.GET)
-    public ResponseEntity<List<Guest>> getAll() {
-        return ResponseEntity.ok(guestRepository.findAll());
+    public ResponseEntity<Iterable<Guest>> getAll() {
+        return ResponseEntity.ok(guestService.getAllGuests());
     }
 
-    @RequestMapping(value = "/restart", method = RequestMethod.GET)
-    public String restart() {
-        restartApp.restartApp();
-        return "restarted";
-    }
+    // @RequestMapping(value = "/restart", method = RequestMethod.GET)
+    // public String restart() {
+    //     restartApp.restartApp();
+    //     return "restarted";
+    // }
 }

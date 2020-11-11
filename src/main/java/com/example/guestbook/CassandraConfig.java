@@ -4,9 +4,16 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.cassandra.CassandraProperties;
+import org.springframework.boot.autoconfigure.cassandra.CqlSessionBuilderCustomizer;
+import org.springframework.boot.autoconfigure.cassandra.DriverConfigLoaderBuilderCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
@@ -19,61 +26,50 @@ import org.springframework.data.cassandra.core.cql.session.init.KeyspacePopulato
 import org.springframework.data.cassandra.core.cql.session.init.ResourceKeyspacePopulator;
 
 @Configuration
-@EnableConfigurationProperties(CassandraProperties.class)
-public class CassandraConfig extends AbstractCassandraConfiguration {
+public class CassandraConfig {
 
-    @Autowired
-    private CassandraProperties cassandraProperties;
+    @Value("${cassandra.keyspace:betterbotz}")
+    private String keyspace;
 
-    @Override
+    @Value("${cassandra.contact-points:localhost}")
+    private String contactPoints;
+
+    @Value("${cassandra.port:9042}")
+    private Integer port;
+
+    @Value("${cassandra.local-datacenter:datacenter1}")
+    private String localDataCenter;
+
     protected String getKeyspaceName() {
-        return cassandraProperties.getKeyspaceName();
+        return keyspace;
     }
 
-    @Override
-    public String[] getEntityBasePackages() {
-        return new String[] { GuestbookApplication.class.getPackage().getName() };
-    }
-
-    @Override
     protected String getLocalDataCenter() {
-        return cassandraProperties.getLocalDatacenter();
+        return localDataCenter;
     }
 
-    @Override
     protected String getContactPoints() {
-        return cassandraProperties.getContactPoints().get(0);
+        return contactPoints;
     }
 
-    @Override
     protected int getPort() {
         return 9042;
     }
 
-    @Override
-    public SchemaAction getSchemaAction() {
-        return SchemaAction.CREATE_IF_NOT_EXISTS;
+    @Bean
+    public CqlSessionBuilderCustomizer sessionBuilderCustomizer() {
+        return builder -> builder.addContactPoint(new InetSocketAddress(this.contactPoints, this.port))
+                .withLocalDatacenter(this.localDataCenter);
     }
 
-    @Override
-    protected SessionBuilderConfigurer getSessionBuilderConfigurer() {
-        return cqlSessionBuilder -> cqlSessionBuilder
-                .addContactPoint(new InetSocketAddress(getContactPoints(), cassandraProperties.getPort()));
+    @Bean
+    public DriverConfigLoaderBuilderCustomizer driverConfigLoaderBuilderCustomizer() {
+        return builder -> builder.withString(DefaultDriverOption.SESSION_NAME, "guestbook");
     }
 
-    @Override
-    protected List<CreateKeyspaceSpecification> getKeyspaceCreations() {
-        return Arrays.asList(CreateKeyspaceSpecification.createKeyspace(getKeyspaceName()).ifNotExists(true)
-                .withNetworkReplication(DataCenterReplication.of(getLocalDataCenter(), 1))
-                .with(KeyspaceOption.DURABLE_WRITES));
-    }
-
-    @Override
-    protected KeyspacePopulator keyspacePopulator() {
-        ResourceKeyspacePopulator keyspacePopulate = new ResourceKeyspacePopulator();
-        keyspacePopulate.setSeparator(";");
-        keyspacePopulate.setScripts(new ClassPathResource("guests.cql"));
-        return keyspacePopulate;
+    @Bean
+    public GuestDao productDao(CqlSession session) {
+        return new GuestDao(session, keyspace, localDataCenter);
     }
 
 }
