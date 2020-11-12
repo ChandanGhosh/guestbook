@@ -4,7 +4,7 @@ metadata:
   name: guestbook
 data:
   application.yml: |-
-    spring.data.cassandra.contact-points: cassandra
+    spring.data.cassandra.contact-points: cassandra.default
     spring.data.cassandra.port: 9042
     spring.data.cassandra.keyspace-name: guestbook
     spring.data.cassandra.local-datacenter: datacenter1

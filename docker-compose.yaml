@@ -3,7 +3,7 @@ version: "2"
 services:
   n1:
     image: cassandra
-    mem_limit: 4096m
+    #mem_limit: 4096m
     volumes:
       - data-volume:/var/lib/cassandra
     ports:
